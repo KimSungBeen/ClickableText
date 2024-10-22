@@ -51,9 +51,11 @@ object ClickableText {
 }
 
 /**
- *
+ * Composable is useful when you want to add a button action to a specific part of continuous text
  * @param fullText Full text in text area
  * @param defaultTextStyle default text style
+ * @param tappedAlpha Alpha value when tapped
+ * @param disabledAlpha Alpha value when disabled
  * @param buttons List of buttons to include in text
  * @param onClick Button click event, clickedButtonIndex: Index of the clicked button
  */
@@ -63,7 +65,9 @@ fun ClickableText(
     defaultTextStyle: TextStyle,
     buttons: List<ClickableText.Button>,
     onClick: (clickedButtonIndex: Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tappedAlpha: Float = 0.5f,
+    disabledAlpha: Float = 0.25f
 ) {
     // State value when no buttons in the text are pressed
     val NONPRESSED_INDEX: Int = -1
@@ -109,8 +113,8 @@ fun ClickableText(
 
             val buttonStatus: ClickableText.Status = currentButton.statusProvider()
             val alphaValue: Float = when {
-                buttonStatus == ClickableText.Status.Disabled -> 0.25f
-                pressedIndex in clickIndexRange -> 0.5f
+                buttonStatus == ClickableText.Status.Disabled -> disabledAlpha
+                pressedIndex in clickIndexRange -> tappedAlpha
                 else -> 1f
             }
 
@@ -142,12 +146,14 @@ fun ClickableText(
                     )
                 )
 
-                // 클릭 가능한 텍스트 영역 추가
+                // Add a clickable text area
                 ButtonUnit(
                     fullText = fullText,
                     button = currentButton,
                     pressedIndex = pressedIndex,
-                    clickIndexRange = clickIndexRange
+                    clickIndexRange = clickIndexRange,
+                    tappedAlpha = tappedAlpha,
+                    disabledAlpha = disabledAlpha
                 )
             }
             // If it is the last button, the preceding text, button, and remaining text are output.
@@ -163,7 +169,9 @@ fun ClickableText(
                     fullText = fullText,
                     button = currentButton,
                     pressedIndex = pressedIndex,
-                    clickIndexRange = clickIndexRange
+                    clickIndexRange = clickIndexRange,
+                    tappedAlpha = tappedAlpha,
+                    disabledAlpha = disabledAlpha
                 )
 
                 append(
@@ -209,20 +217,24 @@ fun ClickableText(
  * @param button Information about the portion of the text area occupied by the button
  * @param pressedIndex Index of the pressed area in the text area
  * @param clickIndexRange Range for correcting click areas that are misaligned due to leading or trailing
+ * @param tappedAlpha Alpha value when tapped
+ * @param disabledAlpha Alpha value when disabled
  */
 @Composable
 private fun AnnotatedString.Builder.ButtonUnit(
     fullText: String,
     button: ClickableText.Button,
     pressedIndex: Int,
-    clickIndexRange: IntRange
+    clickIndexRange: IntRange,
+    tappedAlpha: Float,
+    disabledAlpha: Float
 ) {
     // TextButton Style
     val style: TextStyle = button.textStyle.copy(
         color = button.textStyle.color.copy(
             alpha = when {
-                button.statusProvider() == ClickableText.Status.Disabled -> 0.25f
-                pressedIndex in clickIndexRange -> 0.5f
+                button.statusProvider() == ClickableText.Status.Disabled -> disabledAlpha
+                pressedIndex in clickIndexRange -> tappedAlpha
                 else -> 1f
             }
         )
